@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useFiltersStore } from "@/store/filters.store";
 import { DashboardFilters } from "@/components/dashboard/DashboardFilters";
 import { StatisticsCards } from "@/components/dashboard/StatisticsCards";
+import { MeasurementsChart } from "@/components/dashboard/MeasurementsChart";
 import { getBasicStatistics } from "@/lib/services/statistics-service";
 
 export default function DashboardPage() {
@@ -36,6 +37,8 @@ export default function DashboardPage() {
       <DashboardFilters />
 
       <StatisticsCards data={data} isLoading={isLoading} />
+
+      <MeasurementsChart />
     </div>
   );
 }

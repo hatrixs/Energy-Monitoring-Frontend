@@ -9,36 +9,6 @@ interface StatisticsCardsProps {
 }
 
 export function StatisticsCards({ data, isLoading }: StatisticsCardsProps) {
-  if (isLoading) {
-    return (
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
-          <Card
-            key={i}
-            className="relative overflow-hidden backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 ring-1 ring-gray-200 dark:ring-gray-800 
-            transition-all duration-300"
-          >
-            <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 via-gray-500/10 to-transparent opacity-60" />
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
-              <CardTitle className="text-sm font-medium">
-                <Skeleton className="h-4 w-[120px] bg-gray-200/60 dark:bg-gray-700/60" />
-              </CardTitle>
-              <div className="rounded-full p-2 bg-gray-100/50 dark:bg-gray-800/50">
-                <Skeleton className="h-5 w-5 rounded-full bg-gray-300/60 dark:bg-gray-600/60" />
-              </div>
-            </CardHeader>
-            <CardContent className="relative">
-              <div className="space-y-2">
-                <Skeleton className="h-8 w-[140px] bg-gray-200/60 dark:bg-gray-700/60" />
-                <Skeleton className="h-3 w-[180px] bg-gray-200/60 dark:bg-gray-700/60" />
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
   const cards = [
     {
       title: "Voltaje Promedio",
@@ -65,6 +35,36 @@ export function StatisticsCards({ data, isLoading }: StatisticsCardsProps) {
       iconBg: "bg-amber-500/10",
     },
   ];
+
+  if (isLoading) {
+    return (
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+        {Array.from({ length: cards.length }).map((_, i) => (
+          <Card
+            key={i}
+            className="relative overflow-hidden backdrop-blur-sm bg-white/70 dark:bg-gray-900/70 ring-1 ring-gray-200 dark:ring-gray-800 
+            transition-all duration-300"
+          >
+            <div className="absolute inset-0 bg-gradient-to-br from-gray-500/5 via-gray-500/10 to-transparent opacity-60" />
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 relative">
+              <CardTitle className="text-sm font-medium">
+                <Skeleton className="h-4 w-[120px] bg-gray-200/60 dark:bg-gray-700/60" />
+              </CardTitle>
+              <div className="rounded-full p-2 bg-gray-100/50 dark:bg-gray-800/50">
+                <Skeleton className="h-5 w-5 rounded-full bg-gray-300/60 dark:bg-gray-600/60" />
+              </div>
+            </CardHeader>
+            <CardContent className="relative">
+              <div className="space-y-2">
+                <Skeleton className="h-8 w-[140px] bg-gray-200/60 dark:bg-gray-700/60" />
+                <Skeleton className="h-3 w-[180px] bg-gray-200/60 dark:bg-gray-700/60" />
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+    );
+  }
 
   return (
     <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">

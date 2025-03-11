@@ -5,15 +5,59 @@ interface Measurement {
   date: string;
   voltage: number;
   current: number;
-  sensorId: string;
+  sensor: {
+    id: string;
+    sensorId: string;
+    area: {
+      id: string;
+      name: string;
+      workCenter: {
+        id: string;
+        name: string;
+      };
+    };
+  };
 }
 
 interface MeasurementsResponse {
-  items: Measurement[];
-  total: number;
-  page: number;
-  limit: number;
+  data: Measurement[];
+  meta: {
+    total: number;
+    page: number;
+    lastPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
 }
+
+interface MeasurementsFilter {
+  dateRange?: {
+    from: Date;
+    to: Date;
+  };
+  areaId?: string;
+  sensorId?: string;
+  workCenterId?: string;
+}
+
+export const getMeasurements = async (
+  filters: MeasurementsFilter,
+  page = 1,
+  limit = 100
+): Promise<MeasurementsResponse> => {
+  const response = await axiosInstance.get<MeasurementsResponse>(`/measurements`, {
+    params: {
+      ...(filters.dateRange?.from && { startDate: filters.dateRange.from.toISOString() }),
+      ...(filters.dateRange?.to && { endDate: filters.dateRange.to.toISOString() }),
+      ...(filters.areaId && { areaId: filters.areaId }),
+      ...(filters.sensorId && { sensorId: filters.sensorId }),
+      ...(filters.workCenterId && { workCenterId: filters.workCenterId }),
+      page,
+      limit,
+    },
+  });
+  return response.data
+};
 
 export const getMeasurementsBySensor = async (
   sensorId: string,
