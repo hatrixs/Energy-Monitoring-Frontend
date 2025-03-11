@@ -19,8 +19,20 @@ interface Measurement {
   };
 }
 
+interface AggregatedMeasurement {
+  timestamp: string;
+  avgVoltage: number;
+  maxVoltage: number;
+  minVoltage: number;
+  avgCurrent: number;
+  maxCurrent: number;
+  minCurrent: number;
+  count: number;
+  sensor?: Measurement['sensor'];
+}
+
 interface MeasurementsResponse {
-  data: Measurement[];
+  data: (Measurement | AggregatedMeasurement)[];
   meta: {
     total: number;
     page: number;
@@ -38,6 +50,7 @@ interface MeasurementsFilter {
   areaId?: string;
   sensorId?: string;
   workCenterId?: string;
+  aggregationType?: '15min' | 'hour' | 'day' | 'week';
 }
 
 export const getMeasurements = async (
@@ -52,11 +65,12 @@ export const getMeasurements = async (
       ...(filters.areaId && { areaId: filters.areaId }),
       ...(filters.sensorId && { sensorId: filters.sensorId }),
       ...(filters.workCenterId && { workCenterId: filters.workCenterId }),
+      ...(filters.aggregationType && { aggregationType: filters.aggregationType }),
       page,
       limit,
     },
   });
-  return response.data
+  return response.data;
 };
 
 export const getMeasurementsBySensor = async (

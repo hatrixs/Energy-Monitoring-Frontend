@@ -6,7 +6,6 @@ import { getMeasurements } from "@/lib/services/measurements-service";
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
 } from "@/components/ui/chart";
 import {
@@ -15,11 +14,17 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
+  ResponsiveContainer,
 } from "recharts";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { format } from "date-fns";
+import { format, differenceInDays } from "date-fns";
 import { es } from "date-fns/locale";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardFilters } from "./DashboardFilters";
+
+interface MongoDate {
+  $date: string;
+}
 
 const chartConfig = {
   voltage: {
@@ -42,6 +47,18 @@ export function MeasurementsChart() {
   const { dateRange, selectedArea, selectedSensor, selectedWorkCenter } =
     useFiltersStore();
 
+  // Determinar el tipo de agregación basado en el rango de fechas
+  const getAggregationType = () => {
+    if (!dateRange?.from || !dateRange?.to) return '15min';
+    
+    const days = differenceInDays(dateRange.to, dateRange.from);
+    
+    if (days <= 7) return '15min';
+    if (days <= 30) return 'hour';
+    if (days <= 180) return 'day';
+    return 'week';
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: [
       "measurements",
@@ -49,6 +66,7 @@ export function MeasurementsChart() {
       selectedArea,
       selectedSensor,
       selectedWorkCenter,
+      getAggregationType(),
     ],
     queryFn: () =>
       getMeasurements({
@@ -61,16 +79,46 @@ export function MeasurementsChart() {
         areaId: selectedArea,
         sensorId: selectedSensor,
         workCenterId: selectedWorkCenter,
+        aggregationType: getAggregationType(),
       }),
   });
 
-  const chartData = data?.data?.map((measurement) => ({
-    date: format(new Date(measurement.date), "dd/MM/yyyy HH:mm", {
-      locale: es,
-    }),
-    voltage: measurement.voltage,
-    current: measurement.current,
-  })) || [];
+  const chartData = data?.data?.map((measurement) => {
+    // Determinar si es una medición agregada o normal
+    const isAggregated = 'avgVoltage' in measurement;
+
+    // Asegurarnos de que la fecha sea válida
+    const rawDate = isAggregated ? measurement.timestamp : measurement.date;
+    let dateObj;
+    try {
+      // Manejar formato MongoDB { $date: "..." }
+      if (rawDate && typeof rawDate === 'object' && '$date' in rawDate) {
+        dateObj = new Date((rawDate as MongoDate).$date);
+      } else if (typeof rawDate === 'string') {
+        dateObj = new Date(rawDate);
+      } else {
+        console.error('Formato de fecha no soportado:', rawDate);
+        dateObj = new Date();
+      }
+
+      if (isNaN(dateObj.getTime())) {
+        throw new Error('Invalid date');
+      }
+    } catch (error) {
+      console.error('Error parsing date:', rawDate, error);
+      dateObj = new Date();
+    }
+
+    return {
+      date: format(dateObj, "dd/MM/yyyy HH:mm", { locale: es }),
+      voltage: isAggregated ? measurement.avgVoltage : measurement.voltage,
+      maxVoltage: isAggregated ? measurement.maxVoltage : measurement.voltage,
+      minVoltage: isAggregated ? measurement.minVoltage : measurement.voltage,
+      current: isAggregated ? measurement.avgCurrent : measurement.current,
+      maxCurrent: isAggregated ? measurement.maxCurrent : measurement.current,
+      minCurrent: isAggregated ? measurement.minCurrent : measurement.current,
+    };
+  }) || [];
 
   // Obtener información del primer registro para mostrar detalles del sensor
   const firstMeasurement = data?.data?.[0];
@@ -117,8 +165,13 @@ export function MeasurementsChart() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>Mediciones Históricas</CardTitle>
+      <CardHeader className="space-y-4">
+        <div className="flex items-center justify-between">
+          <CardTitle>Mediciones Históricas</CardTitle>
+          <div className="flex items-center gap-4">
+            <DashboardFilters />
+          </div>
+        </div>
         {subtitle && (
           <p className="text-sm text-muted-foreground">{subtitle}</p>
         )}
@@ -129,83 +182,162 @@ export function MeasurementsChart() {
             config={chartConfig}
             className="h-full w-full"
           >
-            <AreaChart data={chartData}>
-              <defs>
-                <linearGradient id="voltageGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(142.1 76.2% 36.3%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(142.1 76.2% 36.3%)" stopOpacity={0} />
-                </linearGradient>
-                <linearGradient id="currentGradient" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="hsl(346.8 77.2% 49.8%)" stopOpacity={0.3} />
-                  <stop offset="95%" stopColor="hsl(346.8 77.2% 49.8%)" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis
-                dataKey="date"
-                tick={{ fontSize: 12 }}
-                tickMargin={10}
-              />
-              <YAxis
-                yAxisId="voltage"
-                orientation="left"
-                tick={{ fontSize: 12 }}
-                tickMargin={10}
-                label={{
-                  value: "Voltaje (V)",
-                  angle: -90,
-                  position: "insideLeft",
-                }}
-              />
-              <YAxis
-                yAxisId="current"
-                orientation="right"
-                tick={{ fontSize: 12 }}
-                tickMargin={10}
-                label={{
-                  value: "Corriente (A)",
-                  angle: 90,
-                  position: "insideRight",
-                }}
-              />
-              <ChartTooltip
-                content={({ active, payload, label }) => {
-                  if (!active || !payload?.length) return null;
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={chartData}>
+                <defs>
+                  <linearGradient id="voltageGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(142.1 76.2% 36.3%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(142.1 76.2% 36.3%)" stopOpacity={0} />
+                  </linearGradient>
+                  <linearGradient id="currentGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="hsl(346.8 77.2% 49.8%)" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="hsl(346.8 77.2% 49.8%)" stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 12 }}
+                  tickMargin={10}
+                />
+                <YAxis
+                  yAxisId="voltage"
+                  orientation="left"
+                  tick={{ fontSize: 12 }}
+                  tickMargin={10}
+                  label={{
+                    value: "Voltaje (V)",
+                    angle: -90,
+                    position: "insideLeft",
+                  }}
+                />
+                <YAxis
+                  yAxisId="current"
+                  orientation="right"
+                  tick={{ fontSize: 12 }}
+                  tickMargin={10}
+                  label={{
+                    value: "Corriente (A)",
+                    angle: 90,
+                    position: "insideRight",
+                  }}
+                />
+                <ChartTooltip
+                  content={({ active, payload, label }) => {
+                    if (!active || !payload?.length) return null;
 
-                  return (
-                    <ChartTooltipContent
-                      active={active}
-                      payload={payload}
-                      label={label}
-                      labelFormatter={(value) => `Fecha: ${value}`}
-                      nameKey="name"
-                    />
-                  );
-                }}
-              />
-              <Area
-                type="monotone"
-                dataKey="voltage"
-                yAxisId="voltage"
-                stroke="hsl(142.1 76.2% 36.3%)"
-                strokeWidth={2}
-                fill="url(#voltageGradient)"
-                name="Voltaje"
-              />
-              <Area
-                type="monotone"
-                dataKey="current"
-                yAxisId="current"
-                stroke="hsl(346.8 77.2% 49.8%)"
-                strokeWidth={2}
-                fill="url(#currentGradient)"
-                name="Corriente"
-              />
-              <ChartLegend
-                className="mt-2"
-                verticalAlign="bottom"
-              />
-            </AreaChart>
+                    const data = payload[0]?.payload;
+                    if (!data) return null;
+
+                    // Asegurarnos de que todos los valores y colores estén definidos
+                    const safeValue = (value: number | undefined): number => (value !== undefined ? value : 0);
+                    
+                    // Tooltip personalizado
+                    return (
+                      <div className="border-border/50 bg-background grid min-w-[8rem] items-start gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+                        <div className="font-medium">{`Fecha: ${label}`}</div>
+                        <div className="grid gap-1.5">
+                          {/* Voltaje */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig.voltage.theme.light }} />
+                            <div className="flex flex-1 justify-between items-center">
+                              <span className="text-muted-foreground">Voltaje</span>
+                              <span className="text-foreground font-mono font-medium tabular-nums">
+                                {safeValue(data.voltage).toFixed(2)} V
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Voltaje Máx */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig.voltage.theme.light, opacity: 0.7 }} />
+                            <div className="flex flex-1 justify-between items-center">
+                              <span className="text-muted-foreground">Voltaje Máx</span>
+                              <span className="text-foreground font-mono font-medium tabular-nums">
+                                {safeValue(data.maxVoltage).toFixed(2)} V
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Voltaje Mín */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig.voltage.theme.light, opacity: 0.7 }} />
+                            <div className="flex flex-1 justify-between items-center">
+                              <span className="text-muted-foreground">Voltaje Mín</span>
+                              <span className="text-foreground font-mono font-medium tabular-nums">
+                                {safeValue(data.minVoltage).toFixed(2)} V
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Corriente */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig.current.theme.light }} />
+                            <div className="flex flex-1 justify-between items-center">
+                              <span className="text-muted-foreground">Corriente</span>
+                              <span className="text-foreground font-mono font-medium tabular-nums">
+                                {safeValue(data.current).toFixed(2)} A
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Corriente Máx */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig.current.theme.light, opacity: 0.7 }} />
+                            <div className="flex flex-1 justify-between items-center">
+                              <span className="text-muted-foreground">Corriente Máx</span>
+                              <span className="text-foreground font-mono font-medium tabular-nums">
+                                {safeValue(data.maxCurrent).toFixed(2)} A
+                              </span>
+                            </div>
+                          </div>
+                          
+                          {/* Corriente Mín */}
+                          <div className="flex items-center gap-2">
+                            <div className="h-2.5 w-2.5 rounded-[2px]" style={{ backgroundColor: chartConfig.current.theme.light, opacity: 0.7 }} />
+                            <div className="flex flex-1 justify-between items-center">
+                              <span className="text-muted-foreground">Corriente Mín</span>
+                              <span className="text-foreground font-mono font-medium tabular-nums">
+                                {safeValue(data.minCurrent).toFixed(2)} A
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="voltage"
+                  yAxisId="voltage"
+                  stroke={chartConfig.voltage.theme.light}
+                  strokeWidth={2}
+                  fill="url(#voltageGradient)"
+                  name="Voltaje"
+                  connectNulls
+                  activeDot={{ r: 6, fill: chartConfig.voltage.theme.light, strokeWidth: 1 }}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="current"
+                  yAxisId="current"
+                  stroke={chartConfig.current.theme.light}
+                  strokeWidth={2}
+                  fill="url(#currentGradient)"
+                  name="Corriente"
+                  connectNulls
+                  activeDot={{ r: 6, fill: chartConfig.current.theme.light, strokeWidth: 1 }}
+                />
+                <ChartLegend
+                  className="mt-2"
+                  verticalAlign="bottom"
+                  iconType="circle"
+                  iconSize={10}
+                  layout="horizontal"
+                />
+              </AreaChart>
+            </ResponsiveContainer>
           </ChartContainer>
         </div>
         <div className="mt-4 space-y-2 text-sm text-muted-foreground">
