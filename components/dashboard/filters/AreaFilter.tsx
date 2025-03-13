@@ -16,7 +16,7 @@ export function AreaFilter() {
   );
   
   const getAreasByWorkCenter = useWorkCentersStore((state) => state.getAreasByWorkCenter);
-  const areas = getAreasByWorkCenter(selectedWorkCenter);
+  const areas = getAreasByWorkCenter(selectedWorkCenter ?? '');
 
   return (
     <Select

@@ -1,11 +1,11 @@
 import { DateRangeFilter } from "./filters/DateRangeFilter";
-import { AreaFilter } from "./filters/AreaFilter";
 import { WorkCenterFilter } from "./filters/WorkCenterFilter";
+import { AreaFilter } from "./filters/AreaFilter";
 import { SensorFilter } from "./filters/SensorFilter";
 
 export function DashboardFilters() {
   return (
-    <div className="flex flex-col md:flex-row gap-4">
+    <div className="flex flex-wrap gap-4">
       <DateRangeFilter />
       <WorkCenterFilter />
       <AreaFilter />

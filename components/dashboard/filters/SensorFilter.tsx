@@ -14,7 +14,7 @@ export function SensorFilter() {
   const selectedArea = useFiltersStore((state) => state.selectedArea);
 
   const getSensorsByArea = useWorkCentersStore((state) => state.getSensorsByArea);
-  const sensors = getSensorsByArea(selectedArea);
+  const sensors = selectedArea ? getSensorsByArea(selectedArea) : [];
 
   return (
     <Select

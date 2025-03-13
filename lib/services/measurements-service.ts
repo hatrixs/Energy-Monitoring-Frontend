@@ -1,6 +1,6 @@
 import { axiosInstance } from "@/lib/axios";
 
-interface Measurement {
+export interface Measurement {
   id: string;
   date: string;
   voltage: number;
@@ -19,14 +19,10 @@ interface Measurement {
   };
 }
 
-interface AggregatedMeasurement {
+export interface AggregatedMeasurement {
   timestamp: string;
-  avgVoltage: number;
-  maxVoltage: number;
-  minVoltage: number;
-  avgCurrent: number;
-  maxCurrent: number;
-  minCurrent: number;
+  voltage: number;
+  current: number;
   count: number;
   sensor?: Measurement['sensor'];
 }
@@ -45,12 +41,11 @@ interface MeasurementsResponse {
 interface MeasurementsFilter {
   dateRange?: {
     from: Date;
-    to: Date;
+    to?: Date;
   };
   areaId?: string;
   sensorId?: string;
   workCenterId?: string;
-  aggregationType?: '15min' | 'hour' | 'day' | 'week';
 }
 
 export const getMeasurements = async (
@@ -65,7 +60,6 @@ export const getMeasurements = async (
       ...(filters.areaId && { areaId: filters.areaId }),
       ...(filters.sensorId && { sensorId: filters.sensorId }),
       ...(filters.workCenterId && { workCenterId: filters.workCenterId }),
-      ...(filters.aggregationType && { aggregationType: filters.aggregationType }),
       page,
       limit,
     },
