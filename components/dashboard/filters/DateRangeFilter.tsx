@@ -11,7 +11,7 @@ export function DateRangeFilter() {
     <DatePickerWithRange
       value={dateRange}
       onChange={setDateRange}
-      className="w-full md:w-[300px]"
+      className="w-full max-w-[210px]"
     />
   );
 }

@@ -14,6 +14,7 @@ import {
   ChartTooltipContent,
   type ChartConfig,
 } from "@/components/ui/chart";
+import { Statistics } from "@/lib/services/statistics-service";
 
 // Definimos el tipo de medición basado en lo que vemos en el backend
 interface Measurement {
@@ -46,7 +47,12 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-export function MeasurementHistoryChart({ data }: { data: Measurement[] }) {
+interface MeasurementHistoryChartProps {
+  data: Measurement[];
+  statistics?: Statistics;
+}
+
+export function MeasurementHistoryChart({ data, statistics }: MeasurementHistoryChartProps) {
   // Si no hay datos, mostramos un mensaje
   if (!data || data.length === 0) {
     return (
@@ -81,7 +87,18 @@ export function MeasurementHistoryChart({ data }: { data: Measurement[] }) {
   });
 
   // Calculamos estadísticas para mostrar en la gráfica
-  const stats = {
+  // Usamos las estadísticas del backend si están disponibles
+  const stats = statistics ? {
+    minVoltage: statistics.voltage.min,
+    maxVoltage: statistics.voltage.max,
+    avgVoltage: statistics.voltage.avg,
+    minCurrent: statistics.current.min,
+    maxCurrent: statistics.current.max,
+    avgCurrent: statistics.current.avg,
+    firstDate: sortedData.length > 0 ? new Date(sortedData[0].date).toLocaleString() : 'N/A',
+    lastDate: sortedData.length > 0 ? new Date(sortedData[sortedData.length - 1].date).toLocaleString() : 'N/A',
+  } : {
+    // Fallback a cálculos locales si no hay estadísticas del backend
     minVoltage: Math.min(...sortedData.map((m) => m.voltage)),
     maxVoltage: Math.max(...sortedData.map((m) => m.voltage)),
     avgVoltage: parseFloat(
@@ -130,7 +147,9 @@ export function MeasurementHistoryChart({ data }: { data: Measurement[] }) {
           </div>
           <div className="rounded-lg bg-gray-50 p-2 dark:bg-gray-800/50">
             <div className="text-xs text-muted-foreground">Total mediciones</div>
-            <div className="mt-1 text-xs">{sortedData.length} registros</div>
+            <div className="mt-1 text-xs">{sortedData.length} registros{statistics && 
+              <span className="text-muted-foreground"> (muestra)</span>}
+            </div>
           </div>
         </div>
 
@@ -213,8 +232,13 @@ export function MeasurementHistoryChart({ data }: { data: Measurement[] }) {
             <span className="text-xs">Corriente (A)</span>
           </div>
         </div>
+        
         <div className="mt-2 text-center text-xs text-muted-foreground">
-          Datos mostrados: {chartData.length} de {data.length} mediciones
+          {statistics ? (
+            <span>Mostrando {chartData.length} de {data.length} mediciones. Las estadísticas incluyen el total de registros en la base de datos.</span>
+          ) : (
+            <span>Datos mostrados: {chartData.length} de {data.length} mediciones</span>
+          )}
         </div>
       </CardContent>
     </Card>

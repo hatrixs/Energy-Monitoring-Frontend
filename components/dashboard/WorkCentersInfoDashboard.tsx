@@ -16,6 +16,7 @@ import { MeasurementTable } from "@/components/dashboard/MeasurementTable";
 import { useFiltersStore } from "@/store/filters.store";
 import { useWorkCentersStore } from "@/store/work-centers.store";
 import { getMeasurements } from "@/lib/services/measurements-service";
+import { getBasicStatistics } from "@/lib/services/statistics-service";
 
 export function WorkCentersInfoDashboard() {
   // Estado para el tab activo
@@ -45,6 +46,13 @@ export function WorkCentersInfoDashboard() {
     ? new Date(dateRange.to).toISOString().split("T")[0]
     : undefined;
 
+  // Depuración de fechas
+  console.log({
+    rawDateRange: dateRange,
+    formattedStartDate: startDate,
+    formattedEndDate: endDate
+  });
+
   // Query para obtener mediciones
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: [
@@ -64,6 +72,27 @@ export function WorkCentersInfoDashboard() {
         endDate,
         page: 1,
         limit: 1000, // Límite alto para obtener suficientes datos históricos
+      }),
+    enabled: Boolean(selectedWorkCenter), // Solo consultar si hay al menos un centro seleccionado
+  });
+
+  // Query para obtener estadísticas desde el backend
+  const { data: statsData, isLoading: statsLoading } = useQuery({
+    queryKey: [
+      "statistics",
+      selectedWorkCenter,
+      selectedArea,
+      selectedSensor,
+      startDate,
+      endDate,
+    ],
+    queryFn: () =>
+      getBasicStatistics({
+        workCenterId: selectedWorkCenter,
+        areaId: selectedArea,
+        sensorId: selectedSensor,
+        startDate,
+        endDate,
       }),
     enabled: Boolean(selectedWorkCenter), // Solo consultar si hay al menos un centro seleccionado
   });
@@ -217,7 +246,10 @@ export function WorkCentersInfoDashboard() {
             </div>
 
             <TabsContent value="grafica" className="mt-4">
-              <MeasurementHistoryChart data={data?.data || []} />
+              <MeasurementHistoryChart 
+                data={data?.data || []} 
+                statistics={statsData}
+              />
             </TabsContent>
 
             <TabsContent value="tabla" className="mt-4">
@@ -248,14 +280,17 @@ export function WorkCentersInfoDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.data.length
-                    ? (
-                        data?.data.reduce((sum, m) => sum + m.voltage, 0) /
-                        data?.data.length
-                      ).toFixed(2)
-                    : "N/A"}{" "}
-                  V
+                  {statsLoading 
+                    ? "Cargando..." 
+                    : statsData 
+                      ? statsData.voltage.avg.toFixed(2) 
+                      : "N/A"} V
                 </div>
+                {statsData && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Min: {statsData.voltage.min.toFixed(2)} V • Max: {statsData.voltage.max.toFixed(2)} V
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -267,14 +302,17 @@ export function WorkCentersInfoDashboard() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {data?.data.length
-                    ? (
-                        data?.data.reduce((sum, m) => sum + m.current, 0) /
-                        data?.data.length
-                      ).toFixed(2)
-                    : "N/A"}{" "}
-                  A
+                  {statsLoading 
+                    ? "Cargando..." 
+                    : statsData 
+                      ? statsData.current.avg.toFixed(2) 
+                      : "N/A"} A
                 </div>
+                {statsData && (
+                  <div className="text-xs text-muted-foreground mt-1">
+                    Min: {statsData.current.min.toFixed(2)} A • Max: {statsData.current.max.toFixed(2)} A
+                  </div>
+                )}
               </CardContent>
             </Card>
 
