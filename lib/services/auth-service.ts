@@ -1,7 +1,7 @@
 import { LoginFormValues, RegisterFormValues } from "../schemas/auth";
-import Cookies from 'js-cookie';
 import axios, { AxiosError } from 'axios';
-import { axiosInstance } from '../axios';
+import Cookies from 'js-cookie';
+import { api } from '../api';
 
 export interface AuthResponse {
   token: string;
@@ -15,7 +15,7 @@ export interface AuthResponse {
 
 // Crear una instancia específica para auth que no use el interceptor de token
 const authAxios = axios.create({
-  baseURL: axiosInstance.defaults.baseURL,
+  baseURL: api.defaults.baseURL,
 });
 
 export const authService = {
@@ -53,7 +53,13 @@ export const authService = {
         return null;
       }
 
-      const { data } = await axiosInstance.get<AuthResponse>('/auth/check-status');
+      const { data } = await api.get<AuthResponse>('/auth/check-status');
+      
+      // Si el backend devuelve un nuevo token como parte de la respuesta, lo actualizamos
+      if (data.token && data.token !== token) {
+        this.saveToken(data.token);
+      }
+      
       return data;
     } catch {
       this.removeToken();

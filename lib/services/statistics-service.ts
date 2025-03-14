@@ -1,5 +1,5 @@
 import { AxiosError } from "axios";
-import { axiosInstance } from "@/lib/axios";
+import { api } from "@/lib/api";
 import { StatisticsFilter } from "@/types/statistics";
 
 export interface Statistics {
@@ -22,7 +22,7 @@ export const getBasicStatistics = async ({
   workCenterId,
 }: StatisticsFilter): Promise<Statistics> => {
   try {
-    const { data } = await axiosInstance.get<Statistics>(`/statistics`, {
+    const { data } = await api.get<Statistics>(`/statistics`, {
       params: {
         ...(dateRange?.from && { startDate: dateRange.from.toISOString() }),
         ...(dateRange?.to && { endDate: dateRange.to.toISOString() }),

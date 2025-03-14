@@ -1,10 +1,34 @@
-import { axiosInstance } from "@/lib/axios";
+import { api } from '@/lib/api';
 
+// Interfaz para los filtros de mediciones
+export interface MeasurementsFilter {
+  workCenterId?: string;
+  areaId?: string;
+  sensorId?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Interfaz para el resultado paginado
+export interface PaginatedResult<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    lastPage: number;
+    hasNextPage: boolean;
+    hasPreviousPage: boolean;
+  };
+}
+
+// Interfaz para la entidad de medición
 export interface Measurement {
   id: string;
-  date: string;
   voltage: number;
   current: number;
+  date: string;
   sensor: {
     id: string;
     sensorId: string;
@@ -19,90 +43,157 @@ export interface Measurement {
   };
 }
 
-interface MeasurementsResponse {
-  data: Measurement[];
-  meta: {
-    total: number;
-    page: number;
-    lastPage: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-  };
-}
-
-interface MeasurementsFilter {
-  dateRange?: {
-    from: Date;
-    to?: Date;
-  };
-  areaId?: string;
-  sensorId?: string;
-  workCenterId?: string;
-}
-
+/**
+ * Obtiene mediciones filtradas desde el backend
+ * @param filters Filtros para las mediciones
+ * @returns Resultado paginado con las mediciones
+ */
 export const getMeasurements = async (
-  filters: MeasurementsFilter,
-  page = 1,
-  limit = 1000
-): Promise<MeasurementsResponse> => {
-  const response = await axiosInstance.get<MeasurementsResponse>(`/measurements`, {
-    params: {
-      ...(filters.dateRange?.from && { startDate: filters.dateRange.from.toISOString() }),
-      ...(filters.dateRange?.to && { endDate: filters.dateRange.to.toISOString() }),
-      ...(filters.areaId && { areaId: filters.areaId }),
-      ...(filters.sensorId && { sensorId: filters.sensorId }),
-      ...(filters.workCenterId && { workCenterId: filters.workCenterId }),
-      page,
-      limit,
-    },
-  });
-  return response.data;
-};
+  filters: MeasurementsFilter = {},
+): Promise<PaginatedResult<Measurement>> => {
+  try {
+    // Construimos los parámetros de consulta
+    const params = new URLSearchParams();
 
-export const getMeasurementsBySensor = async (
-  sensorId: string,
-  page = 1,
-  limit = 1000
-): Promise<MeasurementsResponse> => {
-  const response = await axiosInstance.get<MeasurementsResponse>(
-    `/measurements/sensor/${sensorId}`, {
-      params: {
-        page,
-        limit,
-      },
+    if (filters.workCenterId) {
+      params.append('workCenterId', filters.workCenterId);
     }
-  );
-  return response.data;
-};
 
-export const getMeasurementsByArea = async (
-  areaId: string,
-  page = 1,
-  limit = 1000
-): Promise<MeasurementsResponse> => {
-  const response = await axiosInstance.get<MeasurementsResponse>(
-    `/measurements/area/${areaId}`, {
-      params: {
-        page,
-        limit,
-      },
+    if (filters.areaId) {
+      params.append('areaId', filters.areaId);
     }
-  );
-  return response.data;
+
+    if (filters.sensorId) {
+      params.append('sensorId', filters.sensorId);
+    }
+
+    if (filters.startDate) {
+      params.append('startDate', filters.startDate);
+    }
+
+    if (filters.endDate) {
+      params.append('endDate', filters.endDate);
+    }
+
+    if (filters.page) {
+      params.append('page', filters.page.toString());
+    }
+
+    if (filters.limit) {
+      params.append('limit', filters.limit.toString());
+    }
+
+    // Hacemos la petición al endpoint
+    const response = await api.get(`/measurements?${params.toString()}`);
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener mediciones:', error);
+    // Devolvemos un resultado vacío en caso de error
+    return {
+      data: [],
+      meta: {
+        total: 0,
+        page: 1,
+        lastPage: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+  }
 };
 
+/**
+ * Obtiene mediciones por centro de trabajo
+ * @param workCenterId ID del centro de trabajo
+ * @param page Número de página
+ * @param limit Cantidad de resultados por página
+ * @returns Resultado paginado con las mediciones
+ */
 export const getMeasurementsByWorkCenter = async (
   workCenterId: string,
   page = 1,
-  limit = 1000
-): Promise<MeasurementsResponse> => {
-  const response = await axiosInstance.get<MeasurementsResponse>(
-    `/measurements/work-center/${workCenterId}`, {
-      params: {
+  limit = 10,
+): Promise<PaginatedResult<Measurement>> => {
+  try {
+    const response = await api.get(
+      `/measurements/work-center/${workCenterId}?page=${page}&limit=${limit}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener mediciones por centro de trabajo:', error);
+    return {
+      data: [],
+      meta: {
+        total: 0,
         page,
-        limit,
+        lastPage: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
       },
-    }
-  );
-  return response.data;
+    };
+  }
+};
+
+/**
+ * Obtiene mediciones por área
+ * @param areaId ID del área
+ * @param page Número de página
+ * @param limit Cantidad de resultados por página
+ * @returns Resultado paginado con las mediciones
+ */
+export const getMeasurementsByArea = async (
+  areaId: string,
+  page = 1,
+  limit = 10,
+): Promise<PaginatedResult<Measurement>> => {
+  try {
+    const response = await api.get(
+      `/measurements/area/${areaId}?page=${page}&limit=${limit}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener mediciones por área:', error);
+    return {
+      data: [],
+      meta: {
+        total: 0,
+        page,
+        lastPage: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+  }
+};
+
+/**
+ * Obtiene mediciones por sensor
+ * @param sensorId ID del sensor
+ * @param page Número de página
+ * @param limit Cantidad de resultados por página
+ * @returns Resultado paginado con las mediciones
+ */
+export const getMeasurementsBySensor = async (
+  sensorId: string,
+  page = 1,
+  limit = 10,
+): Promise<PaginatedResult<Measurement>> => {
+  try {
+    const response = await api.get(
+      `/measurements/sensor/${sensorId}?page=${page}&limit=${limit}`,
+    );
+    return response.data;
+  } catch (error) {
+    console.error('Error al obtener mediciones por sensor:', error);
+    return {
+      data: [],
+      meta: {
+        total: 0,
+        page,
+        lastPage: 1,
+        hasNextPage: false,
+        hasPreviousPage: false,
+      },
+    };
+  }
 };

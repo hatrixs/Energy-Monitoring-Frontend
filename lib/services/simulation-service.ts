@@ -1,5 +1,5 @@
 // frontend/lib/services/simulation-service.ts
-import { axiosInstance } from "@/lib/axios";
+import { api } from "@/lib/api";
 
 interface SimulationConfig {
   workCenter: string;
@@ -58,7 +58,7 @@ const sendMeasurement = async (config: SimulationConfig): Promise<void> => {
   };
 
   try {
-    await axiosInstance.post("/measurements", payload, {
+    await api.post("/measurements", payload, {
       headers: {
         "x-api-key": config.apiKey,
       },

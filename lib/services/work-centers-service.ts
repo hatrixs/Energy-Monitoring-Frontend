@@ -1,4 +1,4 @@
-import { axiosInstance } from "@/lib/axios";
+import { api } from "@/lib/api";
 
 interface Sensor {
   id: string;
@@ -18,6 +18,6 @@ export interface WorkCenter {
 }
 
 export const getAllWorkCenters = async (): Promise<WorkCenter[]> => {
-  const response = await axiosInstance.get<WorkCenter[]>("/work-centers");
+  const response = await api.get<WorkCenter[]>("/work-centers");
   return response.data;
 };
