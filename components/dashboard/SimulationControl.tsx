@@ -84,15 +84,15 @@ export function SimulationControl() {
         <div className="text-sm space-y-2">
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Centro:</span>
-            <span className="font-medium">{String(workCenter?.name).toUpperCase() || "No seleccionado"}</span>
+            <span className="font-medium">{workCenter?.name ? String(workCenter.name).toUpperCase() : "No seleccionado"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Área:</span>
-            <span className="font-medium">{String(area?.name).toUpperCase() || "No seleccionado"}</span>
+            <span className="font-medium">{area?.name ? String(area.name).toUpperCase() : "No seleccionado"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Sensor:</span>
-            <span className="font-medium">{String(sensor?.sensorId).toUpperCase() || "No seleccionado"}</span>
+            <span className="font-medium">{sensor?.sensorId ? String(sensor.sensorId).toUpperCase() : "No seleccionado"}</span>
           </div>
         </div>
         

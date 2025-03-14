@@ -221,15 +221,15 @@ export function MeasurementChart() {
         <div className="space-y-2 mb-4 text-sm">
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Centro:</span>
-            <span className="font-medium">{debugMode ? "Modo Debug" : workCenterName || selectedWorkCenter || "No seleccionado"}</span>
+            <span className="font-medium">{workCenterName || selectedWorkCenter || "No seleccionado"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Área:</span>
-            <span className="font-medium">{debugMode ? "Modo Debug" : areaName || selectedArea || "No seleccionado"}</span>
+            <span className="font-medium">{areaName || selectedArea || "No seleccionado"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Sensor:</span>
-            <span className="font-medium">{debugMode ? "Modo Debug" : sensorIdValue || selectedSensor || "No seleccionado"}</span>
+            <span className="font-medium">{sensorIdValue || selectedSensor || "No seleccionado"}</span>
           </div>
           {debugMode && (
             <div className="p-2 bg-yellow-50 dark:bg-yellow-900/20 rounded text-xs text-yellow-800 dark:text-yellow-300">
