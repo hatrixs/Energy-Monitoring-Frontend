@@ -21,8 +21,6 @@ import { startSimulation, stopSimulation, getSimulationStatus, SimulationStatus 
 
 const API_KEY = "6db0d9f129083e2d9bb11c2ae339fbf2c29960c6256966f80bdc8a1bea209ff3";
 
-
-
 export function SimulationControl() {
   const { selectedWorkCenter, selectedArea, selectedSensor } = useFiltersStore();
   const workCenters = useWorkCentersStore((state) => state.workCenters);
@@ -127,7 +125,7 @@ export function SimulationControl() {
             <Button 
               onClick={handleStartSimulation}
               disabled={!workCenter || !area || !sensor}
-              className="bg-emerald-500 hover:bg-emerald-600 w-full"
+              className="bg-emerald-500 hover:bg-emerald-600 w-full md:w-auto"
             >
               <PlayCircle className="mr-2 h-4 w-4" />
               Iniciar Simulación
@@ -136,7 +134,7 @@ export function SimulationControl() {
             <Button 
               onClick={handleStopSimulation}
               variant="destructive"
-              className="w-full"
+              className="w-full md:w-auto"
             >
               <StopCircle className="mr-2 h-4 w-4" />
               Detener Simulación
