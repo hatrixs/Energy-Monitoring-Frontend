@@ -50,15 +50,15 @@ export function SimulationControl() {
   }, [status.isRunning]);
   
   const handleStartSimulation = () => {
-    if (!workCenter) {
-      alert("Por favor selecciona un centro de trabajo");
+    if (!workCenter || !area || !sensor) {
+      alert("Por favor selecciona un centro de trabajo, área y sensor");
       return;
     }
     
     const config = {
       workCenter: workCenter.name,
-      area: area?.name,
-      sensorId: sensor?.sensorId || selectedSensor,
+      area: area.name,
+      sensorId: sensor.sensorId,
       intervalSeconds: 5,
       apiKey: API_KEY
     };
@@ -90,19 +90,19 @@ export function SimulationControl() {
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Área:</span>
-            <span className="font-medium">{area?.name || "Aleatorio"}</span>
+            <span className="font-medium">{area?.name || "No seleccionado"}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-500 dark:text-gray-400">Sensor:</span>
-            <span className="font-medium">{sensor?.sensorId || "Aleatorio"}</span>
+            <span className="font-medium">{sensor?.sensorId || "No seleccionado"}</span>
           </div>
         </div>
         
         {/* Alertas y estado */}
-        {!workCenter && (
+        {(!workCenter || !area || !sensor) && (
           <div className="flex items-center gap-2 rounded-md bg-yellow-50 dark:bg-yellow-900/20 p-2 text-xs text-yellow-800 dark:text-yellow-300">
             <AlertCircle className="h-4 w-4" />
-            <span>Selecciona un centro de trabajo para iniciar</span>
+            <span>Selecciona un centro de trabajo, área y sensor para iniciar</span>
           </div>
         )}
         
@@ -126,7 +126,7 @@ export function SimulationControl() {
           {!status.isRunning ? (
             <Button 
               onClick={handleStartSimulation}
-              disabled={!workCenter}
+              disabled={!workCenter || !area || !sensor}
               className="bg-emerald-500 hover:bg-emerald-600 w-full"
             >
               <PlayCircle className="mr-2 h-4 w-4" />

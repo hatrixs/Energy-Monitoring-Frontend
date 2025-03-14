@@ -49,8 +49,8 @@ const sendMeasurement = async (config: SimulationConfig): Promise<void> => {
 
   const payload = {
     workCenter: config.workCenter,
-    area: config.area || `Área ${Math.floor(Math.random() * 5) + 1}`,
-    sensorId: config.sensorId || `Sensor ${Math.floor(Math.random() * 10) + 1}`,
+    area: config.area,
+    sensorId: config.sensorId,
     date,
     time,
     voltage: Number(randomVariation(voltageBase, 8).toFixed(2)),
