@@ -1,3 +1,5 @@
+"use client";
+
 import { DatePickerWithRange } from "@/components/ui/date-range-picker";
 import { useFiltersStore } from "@/store/filters.store";
 
@@ -12,4 +14,4 @@ export function DateRangeFilter() {
       className="w-full md:w-[300px]"
     />
   );
-} 
+}

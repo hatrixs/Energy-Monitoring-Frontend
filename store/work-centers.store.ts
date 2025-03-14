@@ -10,15 +10,49 @@ interface WorkCentersState {
 
 export const useWorkCentersStore = create<WorkCentersState>((set, get) => ({
   workCenters: [],
-  setWorkCenters: (workCenters) => set({ workCenters }),
+  
+  setWorkCenters: (workCenters) => {
+    set({ workCenters });
+  },
+  
   getAreasByWorkCenter: (workCenterId) => {
-    const workCenter = get().workCenters.find((wc) => wc.id === workCenterId);
-    return workCenter?.areas ?? [];
+    if (!workCenterId) {
+      return [];
+    }
+    
+    const allWorkCenters = get().workCenters;
+    const workCenter = allWorkCenters.find((wc) => wc.id === workCenterId);
+    
+    if (!workCenter) {
+      return [];
+    }
+    
+    return workCenter.areas || [];
   },
+  
   getSensorsByArea: (areaId) => {
-    const area = get().workCenters
-      .flatMap((wc) => wc.areas)
-      .find((area) => area.id === areaId);
-    return area?.sensors ?? [];
-  },
+    if (!areaId) {
+      return [];
+    }
+    
+    const allWorkCenters = get().workCenters;
+    
+    // Busca el área específica en todos los centros de trabajo
+    let foundArea = null;
+    for (const wc of allWorkCenters) {
+      if (!wc.areas) continue;
+      
+      const area = wc.areas.find(a => a.id === areaId);
+      if (area) {
+        foundArea = area;
+        break;
+      }
+    }
+    
+    if (!foundArea) {
+      return [];
+    }
+    
+    return foundArea.sensors || [];
+  }
 })); 

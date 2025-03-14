@@ -14,16 +14,28 @@ function getToken(request: NextRequest): string | null {
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
+  // Verificar si es la ruta raíz
+  const isRootPath = pathname === "/";
+  
   // Verificar si es una ruta de autenticación
   const isAuthPath = AUTH_PATHS.some((path) => pathname.startsWith(path));
   
   // Obtener el token de autenticación
   const token = getToken(request);
   
+  // Si el usuario está en la ruta raíz, redirigir según estado de autenticación
+  if (isRootPath) {
+    if (token) {
+      return NextResponse.redirect(new URL('/monitorizacion', request.url));
+    } else {
+      return NextResponse.redirect(new URL('/auth/login', request.url));
+    }
+  }
+  
   // Si el usuario está autenticado y trata de acceder a una página de autenticación,
   // lo redirigimos a la página principal
   if (token && isAuthPath) {
-    return NextResponse.redirect(new URL('/', request.url));
+    return NextResponse.redirect(new URL('/monitorizacion', request.url));
   }
   
   // Verificar si es una ruta pública que no requiere autenticación
