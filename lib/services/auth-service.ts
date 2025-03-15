@@ -1,4 +1,4 @@
-import { LoginFormValues, RegisterFormValues } from "../schemas/auth";
+import { LoginFormValues } from "../schemas/auth";
 import axios, { AxiosError } from 'axios';
 import Cookies from 'js-cookie';
 import { api } from '../api';
@@ -32,7 +32,7 @@ export const authService = {
     }
   },
 
-  async register(userData: RegisterFormValues): Promise<AuthResponse> {
+  async register(userData: { name: string, email: string, password: string }): Promise<AuthResponse> {
     try {
       const { data } = await authAxios.post<AuthResponse>('/auth/sign-up', userData);
       this.saveToken(data.token);

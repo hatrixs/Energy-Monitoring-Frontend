@@ -34,7 +34,8 @@ export default function RegisterPage() {
 
   const onSubmit = async (values: RegisterFormValues) => {
     try {
-      await registerUser(values);
+      const { name, email, password } = values;
+      await registerUser({ name, email, password });
       toast.success('¡Registro exitoso!');
     } catch (error) {
       console.error('Error al registrar:', error);

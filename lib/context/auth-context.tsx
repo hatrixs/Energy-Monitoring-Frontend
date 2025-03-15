@@ -3,13 +3,19 @@
 import { createContext, useState, useContext, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
 import { authService } from '@/lib/services/auth-service';
-import { LoginFormValues, RegisterFormValues } from '@/lib/schemas/auth';
+import { LoginFormValues } from '@/lib/schemas/auth';
 
 interface User {
   id: string;
   email: string;
   fullName: string;
   roles: string[];
+}
+
+interface RegisterFormValues {
+  name: string;
+  email: string;
+  password: string;
 }
 
 interface AuthContextType {
