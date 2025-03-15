@@ -15,7 +15,7 @@ export interface AuthResponse {
 
 // Crear una instancia específica para auth que no use el interceptor de token
 const authAxios = axios.create({
-  baseURL: api.defaults.baseURL,
+  baseURL: `${process.env.NEXT_PUBLIC_API_URL}/api`,
 });
 
 export const authService = {
